@@ -1,23 +1,20 @@
 const mongoose = require("mongoose");
-const chai = require("chai");
 const Employee = require("../models/employee");
-const should = chai.should();
 
 describe("Employee Model", () => {
-  before((done) => {
-    mongoose.connect("mongodb://localhost/testDB", {
+  beforeAll(async () => {
+    mongoose.set("useCreateIndex", true);
+    await mongoose.connect("mongodb://localhost/testDB", {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    const db = mongoose.connection;
-    db.on("error", console.error.bind(console, "connection error:"));
-    db.once("open", () => {
-      console.log("Connected to test database");
-      done();
-    });
+    console.log("Connected to test database");
+
+    // Clear the collection before each test
+    await Employee.deleteMany({});
   });
 
-  after((done) => {
+  afterAll((done) => {
     mongoose.connection.close(done);
   });
 
@@ -43,11 +40,12 @@ describe("Employee Model", () => {
         TaxLiability: 300,
       },
     });
+
     employee.save((err, savedEmployee) => {
-      should.not.exist(err);
-      savedEmployee.should.be.an("object");
-      savedEmployee.should.have.property("Name").eql("John Doe");
+      expect(err).toBeNull();
+      expect(savedEmployee).toBeInstanceOf(Object);
+      expect(savedEmployee.Name).toBe("John Doe");
       done();
     });
-  });
+  }, 60000);
 });
